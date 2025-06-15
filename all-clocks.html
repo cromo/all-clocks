@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generic Clock Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .clock-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .clock {
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        .preset-control {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preset-control select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .preset-control select:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .preset-control option {
+            background: #2a2a2a;
+            color: white;
+        }
+
+        .function-control {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .function-control textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .function-control textarea:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .function-control input[type="number"] {
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            padding: 8px;
+            outline: none;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hand-control {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .hand-control:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .hand-control label {
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+            min-width: 80px;
+        }
+
+        .hand-control input[type="range"] {
+            flex: 1;
+            margin: 0 15px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .hand-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-control input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-control input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .hand-control span {
+            color: white;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .add-hand {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .add-hand:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .remove-hand {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .remove-hand:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .info {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body onload="loadPreset('smooth12')">
+    <div class="container">
+        <h1>Generic Clock Visualization</h1>
+
+        <div class="clock-container">
+            <svg class="clock" width="300" height="300" viewBox="0 0 300 300">
+                <!-- Clock face -->
+                <circle cx="150" cy="150" r="140" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(255, 255, 255, 0.3)"
+                    stroke-width="2" />
+
+                <!-- Hour markers -->
+                <g id="hour-markers">
+                    <!-- 12 o'clock -->
+                    <line x1="150" y1="20" x2="150" y2="40" stroke="rgba(255, 255, 255, 0.7)" stroke-width="3" />
+                    <!-- 3 o'clock -->
+                    <line x1="280" y1="150" x2="260" y2="150" stroke="rgba(255, 255, 255, 0.7)" stroke-width="3" />
+                    <!-- 6 o'clock -->
+                    <line x1="150" y1="280" x2="150" y2="260" stroke="rgba(255, 255, 255, 0.7)" stroke-width="3" />
+                    <!-- 9 o'clock -->
+                    <line x1="20" y1="150" x2="40" y2="150" stroke="rgba(255, 255, 255, 0.7)" stroke-width="3" />
+                </g>
+
+                <!-- Minute markers -->
+                <g id="minute-markers">
+                    <!-- Generate 60 minute markers -->
+                </g>
+
+                <!-- Center dot -->
+                <circle cx="150" cy="150" r="6" fill="rgba(255, 255, 255, 0.8)" />
+
+                <!-- Clock hands will be added here -->
+                <g id="clock-hands"></g>
+            </svg>
+        </div>
+
+        <div class="controls">
+            <div class="preset-control">
+                <h3 style="color: white; margin-bottom: 15px;">Presets</h3>
+                <select id="preset-selector" onChange="loadPreset(this.value)">
+                    <option value="smooth12">Smooth 12 Hour</option>
+                    <option value="discrete12">Discrete 12 Hour</option>
+                    <option value="discrete24dayUp">Discrete 24 Hour (Noon up)</option>
+                    <option value="smooth24dayUp">Smooth 24 Hour (Noon up)</option>
+                    <option value="unixClock">Unix Clock</option>
+                    <option value="template">Function Template</option>
+                    <option value="wave">Wave Animation</option>
+                    <option value="spinner">Loading Spinner</option>
+                </select>
+            </div>
+            <div class="function-control">
+                <h3 style="color: white; margin-bottom: 15px;">Position Function</h3>
+                <textarea id="position-function"
+                    placeholder="Enter JavaScript function that returns array of positions (0-1)...">
+// Function should return array of positions (0-1) for each hand
+function getPositions() {
+    const now = new Date();
+    const hours = now.getHours() % 12;
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    
+    return [
+        hours / 12,     // Hour hand (0-1)
+        minutes / 60,   // Minute hand (0-1)
+        seconds / 60    // Second hand (0-1)
+    ];
+}</textarea>
+                <div style="display: flex; align-items: center; margin-top: 15px; gap: 15px;">
+                    <label style="color: white;">Interval (ms):</label>
+                    <input type="number" id="update-interval" value="1000" min="100"
+                        style="width: 80px; padding: 5px; border-radius: 5px; border: none;" onInput="updateInterval()">
+                    <button class="add-hand" onclick="toggleAutoUpdate()">Start Auto</button>
+                    <button class="add-hand" onclick="runOnce()">Run Once</button>
+                    <span id="status" style="color: rgba(255, 255, 255, 0.7);"></span>
+                </div>
+            </div>
+            <div id="hand-controls"></div>
+            <button class="add-hand" onclick="addHand()">Add Hand</button>
+            <button class="add-hand" onclick="resetClock()">Reset Clock</button>
+        </div>
+
+        <div class="info">
+            0 = 12 o'clock (straight up) | 0.25 = 3 o'clock (right) | 0.5 = 6 o'clock (down) | 0.75 = 9 o'clock (left)
+        </div>
+    </div>
+
+    <script>
+        let hands = [
+            { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+            { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+            { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+        ];
+        let nextHandId = 4;
+        let autoUpdateInterval = null;
+        let isAutoRunning = false;
+
+        // Preset configurations
+        const presets = {
+            discrete12: {
+                name: "Discrete 12 Hour",
+                interval: 1000,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                    { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+                    { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+                ],
+                functionCode: `// Function should return array of positions (0-1) for each hand
+function getPositions() {
+    const now = new Date();
+    const hours = now.getHours() % 12;
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    
+    return [
+        hours / 12,     // Hour hand (0-1)
+        minutes / 60,   // Minute hand (0-1)
+        seconds / 60    // Second hand (0-1)
+    ];
+}`
+            },
+            smooth12: {
+                name: "Smooth 12 Hour",
+                interval: 100,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                    { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+                    { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+                ],
+                functionCode: `// Function should return array of positions (0-1) for each hand
+function getPositions() {
+    const now = new Date();
+    const hours = now.getHours() % 12 + now.getMinutes() / 60;
+    const minutes = now.getMinutes() + now.getSeconds() / 60;
+    const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+    
+    return [
+        hours / 12,     // Hour hand (0-1)
+        minutes / 60,   // Minute hand (0-1)
+        seconds / 60    // Second hand (0-1)
+    ];
+}`
+            },
+            discrete24dayUp: {
+                name: "Discrete 24 Hour (Noon up)",
+                interval: 1000,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                    { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+                    { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+                ],
+                functionCode: `// Function should return array of positions (0-1) for each hand
+function getPositions() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    
+    return [
+        (hours + 12) % 24 / 24,     // Hour hand (0-1)
+        minutes / 60,   // Minute hand (0-1)
+        seconds / 60    // Second hand (0-1)
+    ];
+}`
+            },
+            smooth24dayUp: {
+                name: "Smooth 24 Hour (Noon up)",
+                interval: 100,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                    { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+                    { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+                ],
+                // This is buggy, need to debug
+                functionCode: `// Function should return array of positions (0-1) for each hand
+function getPositions() {
+    const now = new Date();
+    const hours = now.getHours() + now.getMinutes() / 60;
+    const minutes = now.getMinutes() + now.getSeconds() / 60;
+    const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+    
+    return [
+        (hours + 12) % 24 / 24,     // Hour hand (0-1)
+        minutes / 60,   // Minute hand (0-1)
+        seconds / 60    // Second hand (0-1)
+    ];
+}`
+            },
+            unixClock: {
+                name: "Unix Clock",
+                interval: 7,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 90 },
+                    { id: 2, position: 0.2, color: '#4ecdc4', length: 80 },
+                    { id: 3, position: 0.4, color: '#45b7d1', length: 70 },
+                    { id: 4, position: 0.6, color: '#96ceb4', length: 60 },
+                    { id: 5, position: 0.8, color: '#feca57', length: 50 }
+                ],
+                functionCode: `// Each hand represents three digits of a decimal Unix timestamp
+function getPositions() {
+    const now = +new Date();
+    const milliseconds = now % 1e3;
+    const seconds = now / 1e3 % 1e3;
+    const kiloseconds = now / 1e6 % 1e3;
+    const megaseconds = now / 1e9 % 1e3;
+    const gigaseconds = now / 1e12 % 1e3;
+    
+    return [
+        gigaseconds / 1e3,
+        megaseconds / 1e3,
+        kiloseconds / 1e3,
+        seconds / 1e3,
+        milliseconds / 1e3
+    ];
+}`
+            },
+            template: {
+                name: "Function Template",
+                interval: 1000,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                    { id: 2, position: 0.33, color: '#4ecdc4', length: 90 },
+                    { id: 3, position: 0.66, color: '#45b7d1', length: 70 }
+                ],
+                functionCode: `// Template function - modify this to create your own animation
+function getPositions() {
+    // You can access current time
+    const now = new Date();
+    const seconds = now.getSeconds();
+    const milliseconds = now.getMilliseconds();
+    
+    // Or create your own variables
+    const customValue1 = 0.25;  // Static position
+    const customValue2 = 0.5;   // Another static position  
+    const customValue3 = 0.75;  // Third static position
+    
+    // Return array of positions (0-1) for each hand
+    // Each number corresponds to one hand's position
+    return [
+        customValue1,    // Hand 1 position
+        customValue2,    // Hand 2 position
+        customValue3     // Hand 3 position
+    ];
+}`
+            },
+            wave: {
+                name: "Wave Animation",
+                interval: 50,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 90 },
+                    { id: 2, position: 0.2, color: '#4ecdc4', length: 80 },
+                    { id: 3, position: 0.4, color: '#45b7d1', length: 70 },
+                    { id: 4, position: 0.6, color: '#96ceb4', length: 60 },
+                    { id: 5, position: 0.8, color: '#feca57', length: 50 }
+                ],
+                functionCode: `// Smooth wave animation across multiple hands
+function getPositions() {
+    const now = Date.now();
+    const baseTime = now / 2000; // Slower wave
+    
+    return [
+        (Math.sin(baseTime) + 1) / 2,                    // Hand 1
+        (Math.sin(baseTime + Math.PI/4) + 1) / 2,        // Hand 2 (offset)
+        (Math.sin(baseTime + Math.PI/2) + 1) / 2,        // Hand 3 (offset)
+        (Math.sin(baseTime + 3*Math.PI/4) + 1) / 2,      // Hand 4 (offset)
+        (Math.sin(baseTime + Math.PI) + 1) / 2           // Hand 5 (offset)
+    ];
+}`
+            },
+            spinner: {
+                name: "Loading Spinner",
+                interval: 100,
+                hands: [
+                    { id: 1, position: 0, color: '#ff6b6b', length: 100 },
+                    { id: 2, position: 0.33, color: '#4ecdc4', length: 80 },
+                    { id: 3, position: 0.66, color: '#45b7d1', length: 60 }
+                ],
+                functionCode: `// Fast spinning loader animation
+function getPositions() {
+    const now = Date.now();
+    const fastSpin = (now / 797) % 1;        // Fast spinner
+    const mediumSpin = (now / 1601) % 1;      // Medium spinner  
+    const slowSpin = (now / 3203) % 1;        // Slow spinner
+    
+    return [
+        fastSpin,     // Fast spinning hand
+        mediumSpin,   // Medium spinning hand
+        slowSpin      // Slow spinning hand
+    ];
+}`
+            }
+        };
+
+        // Generate minute markers
+        function generateMinuteMarkers() {
+            const minuteMarkersGroup = document.getElementById('minute-markers');
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 !== 0) { // Skip positions where hour markers are
+                    const angle = (i * 6) - 90; // Convert to degrees, -90 to start from top
+                    const radians = (angle * Math.PI) / 180;
+                    const x1 = 150 + Math.cos(radians) * 130;
+                    const y1 = 150 + Math.sin(radians) * 130;
+                    const x2 = 150 + Math.cos(radians) * 135;
+                    const y2 = 150 + Math.sin(radians) * 135;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    line.setAttribute('stroke', 'rgba(255, 255, 255, 0.4)');
+                    line.setAttribute('stroke-width', '1');
+                    minuteMarkersGroup.appendChild(line);
+                }
+            }
+        }
+
+        function percentageToAngle(percentage) {
+            // Convert fractional position (0-1) to angle in degrees
+            // 0 = -90 degrees (12 o'clock), 0.25 = 0 degrees (3 o'clock), etc.
+            return (percentage * 360) - 90;
+        }
+
+        function createHand(hand) {
+            const angle = percentageToAngle(hand.position);
+            const radians = (angle * Math.PI) / 180;
+            const endX = 150 + Math.cos(radians) * hand.length;
+            const endY = 150 + Math.sin(radians) * hand.length;
+
+            const handElement = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            handElement.setAttribute('id', `hand-${hand.id}`);
+            handElement.setAttribute('x1', '150');
+            handElement.setAttribute('y1', '150');
+            handElement.setAttribute('x2', endX);
+            handElement.setAttribute('y2', endY);
+            handElement.setAttribute('stroke', hand.color);
+            handElement.setAttribute('stroke-width', '4');
+            handElement.setAttribute('stroke-linecap', 'round');
+            handElement.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))';
+
+            return handElement;
+        }
+
+        function updateHand(handId, position, color, length) {
+            const hand = hands.find(h => h.id === handId);
+            if (hand) {
+                hand.position = position;
+                hand.color = color;
+                hand.length = length;
+
+                const handElement = document.getElementById(`hand-${handId}`);
+                if (handElement) {
+                    const angle = percentageToAngle(position);
+                    const radians = (angle * Math.PI) / 180;
+                    const endX = 150 + Math.cos(radians) * length;
+                    const endY = 150 + Math.sin(radians) * length;
+
+                    handElement.setAttribute('x2', endX);
+                    handElement.setAttribute('y2', endY);
+                    handElement.setAttribute('stroke', color);
+                }
+            }
+        }
+
+        function renderHands() {
+            const handsGroup = document.getElementById('clock-hands');
+            handsGroup.innerHTML = '';
+
+            hands.forEach(hand => {
+                handsGroup.appendChild(createHand(hand));
+            });
+        }
+
+        function renderControls() {
+            const controlsDiv = document.getElementById('hand-controls');
+            controlsDiv.innerHTML = '';
+
+            hands.forEach(hand => {
+                const controlDiv = document.createElement('div');
+                controlDiv.className = 'hand-control';
+
+                controlDiv.innerHTML = `
+                    <label>Hand ${hand.id}:</label>
+                    <input type="range" min="0" max="1" step="0.001" value="${hand.position}" 
+                           onInput="updateHand(${hand.id}, parseFloat(this.value), document.getElementById('color-${hand.id}').value, parseInt(document.getElementById('length-${hand.id}').value))">
+                    <span>${hand.position.toFixed(3)}</span>
+                    <input type="color" id="color-${hand.id}" value="${hand.color}" 
+                           onChange="updateHand(${hand.id}, parseFloat(document.getElementById('position-${hand.id}').value), this.value, parseInt(document.getElementById('length-${hand.id}').value))">
+                    <input type="range" id="length-${hand.id}" min="30" max="120" value="${hand.length}" 
+                           onInput="updateHand(${hand.id}, parseFloat(document.getElementById('position-${hand.id}').value), document.getElementById('color-${hand.id}').value, parseInt(this.value))"
+                           style="width: 80px; margin-left: 10px;">
+                    <button class="remove-hand" onclick="removeHand(${hand.id})">Remove</button>
+                `;
+
+                // Update the position display and add proper ID
+                const rangeInput = controlDiv.querySelector('input[type="range"]');
+                rangeInput.id = `position-${hand.id}`;
+                const positionSpan = controlDiv.querySelector('span');
+                rangeInput.addEventListener('input', function () {
+                    positionSpan.textContent = parseFloat(this.value).toFixed(3);
+                });
+
+                controlsDiv.appendChild(controlDiv);
+            });
+        }
+
+        function addHand() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            hands.push({
+                id: nextHandId++,
+                position: Math.random(),
+                color: randomColor,
+                length: 70 + Math.random() * 40
+            });
+
+            renderHands();
+            renderControls();
+        }
+
+        function removeHand(handId) {
+            hands = hands.filter(h => h.id !== handId);
+            renderHands();
+            renderControls();
+        }
+
+        function resetClock() {
+            hands = [
+                { id: 1, position: 0, color: '#ff6b6b', length: 80 },
+                { id: 2, position: 0.25, color: '#4ecdc4', length: 100 },
+                { id: 3, position: 0.5, color: '#45b7d1', length: 60 }
+            ];
+            nextHandId = 4;
+            renderHands();
+            renderControls();
+        }
+
+        function runPositionFunction() {
+            try {
+                const functionCode = document.getElementById('position-function').value;
+                // Create function from the text
+                const userFunction = new Function('return (' + functionCode + ')')();
+                const positions = userFunction();
+
+                if (!Array.isArray(positions)) {
+                    throw new Error('Function must return an array');
+                }
+
+                // Update hand positions
+                positions.forEach((position, index) => {
+                    if (hands[index] && typeof position === 'number') {
+                        // Clamp position to 0-1 range
+                        const clampedPosition = Math.max(0, Math.min(1, position));
+                        hands[index].position = clampedPosition;
+                    }
+                });
+
+                renderHands();
+                renderControls();
+
+                document.getElementById('status').textContent = 'Success';
+                document.getElementById('status').style.color = '#4ecdc4';
+
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.color = '#ff6b6b';
+                console.error('Position function error:', error);
+            }
+        }
+
+        function runOnce() {
+            runPositionFunction();
+        }
+
+        function toggleAutoUpdate() {
+            const button = event.target;
+
+            if (isAutoRunning) {
+                // Stop auto update
+                clearInterval(autoUpdateInterval);
+                autoUpdateInterval = null;
+                isAutoRunning = false;
+                button.textContent = 'Start Auto';
+                button.style.background = 'linear-gradient(45deg, #4ecdc4, #44a08d)';
+                document.getElementById('status').textContent = 'Stopped';
+                document.getElementById('status').style.color = 'rgba(255, 255, 255, 0.7)';
+            } else {
+                // Start auto update
+                const interval = parseInt(document.getElementById('update-interval').value) || 1000;
+
+                autoUpdateInterval = setInterval(() => {
+                    runPositionFunction();
+                }, interval);
+
+                isAutoRunning = true;
+                button.textContent = 'Stop Auto';
+                button.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a52)';
+                document.getElementById('status').textContent = 'Running';
+                document.getElementById('status').style.color = '#4ecdc4';
+
+                // Run once immediately
+                runPositionFunction();
+            }
+        }
+
+        function updateInterval() {
+            if (isAutoRunning) {
+                // If auto mode is active, restart with new interval
+                const newInterval = parseInt(document.getElementById('update-interval').value) || 1000;
+
+                // Clear the old interval
+                clearInterval(autoUpdateInterval);
+
+                // Start with new interval
+                autoUpdateInterval = setInterval(() => {
+                    runPositionFunction();
+                }, newInterval);
+
+                document.getElementById('status').textContent = 'Running';
+                document.getElementById('status').style.color = '#4ecdc4';
+            }
+        }
+
+        function loadPreset(presetKey) {
+            if (!presetKey || !presets[presetKey]) return;
+
+            const preset = presets[presetKey];
+
+            // Stop auto mode if running
+            if (isAutoRunning) {
+                toggleAutoUpdate();
+            }
+
+            // Load hands configuration
+            hands = preset.hands.map(hand => ({ ...hand })); // Deep copy
+            nextHandId = Math.max(...hands.map(h => h.id)) + 1;
+
+            // Load function code
+            document.getElementById('position-function').value = preset.functionCode;
+
+            // Load interval
+            document.getElementById('update-interval').value = preset.interval;
+
+            // Update display
+            renderHands();
+            renderControls();
+
+            // Show status
+            document.getElementById('status').textContent = `Loaded`;
+            document.getElementById('status').style.color = '#4ecdc4';
+
+            runOnce();
+        }
+
+        // Initialize the clock
+        generateMinuteMarkers();
+        renderHands();
+        renderControls();
+    </script>
+</body>
+
+</html>
